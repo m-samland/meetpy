@@ -1,0 +1,150 @@
+Main topics:
+    - Python Data Model
+        - naming: _var vs __var vs __var__
+    - *args and **kwargs
+    
+1. Start with a couple simple classes:
+    
+    class Point:
+
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+            
+    class Line:
+
+        def __init__(self, p1, p2):
+            self.p1 = p1
+            self.p2 = p2
+
+2. Python Data Model: _x, __x, and __x__
+    
+    Now, we want to make a calculate slope method but want it to be private: how to name?
+    
+    A: Single underscore (99% of the time):
+
+        from Geometry import *  -> won't import objects with names starting with _      (NOTE: importing * from a module is generally discouraged!)
+        
+        def _calculate_slope(self):
+            self.m = (self.p2.y - self.p1.y) / (self.p2.x - self.p1.x)
+            print("The slope is %.1f" % self.m)
+            
+        
+    B: But what about double underscore - use sparingly! Useful for subclasses (i.e. Inheritance)
+        
+        def __calculate_slope(self):
+            self.m = (self.p2.y - self.p1.y) / (self.p2.x - self.p1.x)
+            print("The slope is %.1f" % self.m)
+
+
+    class RedLine(Line):
+
+        def __init__(self, p1, p2):
+            self.colour = 'Red'
+            super().__init__(p1, p2)
+
+        def __calculate_slope(self):
+            self.m = 0
+            print("haha... the slope is now %.1f!" % self.m)
+            
+        example:
+            try the following with _calculate_slope and__calculate_slope
+                a = Geometry.Point(1, 2)
+                b = Geometry.Point(3, 4)
+                l = Geometry.Line(a, b)
+                r = Geometry.RedLine(a, b)
+                
+            Notice that with a single underscore, the calculate_slope method of Line is overriden and slope is set to 0 for the r (RedLine) instance.
+            But with double underscore, the calculate_slope method of Line is called when r is created.
+            
+            However, if a person was determined, they could still call r._RedLine__calculate_slope() and set the slope to 0.
+            ie. The __ before a variable or method name renames the variable/method to: _ClassName__MethodName
+            Note: NEVER EVER access a method or variable this way: you will probably break something!
+
+    C: Finally what about leading and trailing double underscore (i.e. magic methods)?
+            
+        NEVER! Unless you want to specifically redefine existing behaviour!
+        Such as the following ones (find more -> Google "Python Data Model") for the Point object:
+            
+        def __eq__(self, pnt):
+            return self.x == pnt.x and self.y == pnt.y
+                
+        def __str__(self) -> str:
+            return "(%.2f, %.2f)" % (self.x, self.y)
+
+        def __repr__(self) -> str:
+            return "Geometry.Point(%.2f, %.2f)" % (self.x, self.y)
+            
+        examples:
+            now in an interactive prompt:
+                a = Geometry.Point(1, 2)
+                a
+                print(a)
+                c = eval(repr(a))   # I can even recreate the a Point object from the repr of a
+                c
+                print(c)
+                a == c
+                a is c              # Note: c is equivalent to a but is NOT a (ie. they are both distinct objects with a different address in memory)
+        
+3. args and kwargs:
+
+    A. *args
+
+        * before variable name: collection of items (tuple, list, etc...) to/from arguments
+        
+        For example:
+            my_tuple = (5, 6)
+            a_point = Geometry.Point(t[0], t[1])    # I could declare a Point like this
+            a_point = Geometry.Point(*t)            # Is equivalent to above but more concise - especially if there are several items in collection
+
+        Most common use is with *args which allows to pass in an unspecified number of arguments to a function:
+        
+        e.g. In Point class:
+            
+            def __init__(self, x, y, *args):
+                self.x = x
+                self.y = y
+                if args:
+                    self.z = args[0]
+                    
+            In interactive prompt:
+                a_point = Geometry.Point(1, 2, 3, 4)
+                print(Point.z)
+                a_point.__dict__        # shows all attributes of a_point: Note that although it accepts the last number (4), the information is lost since we do not use it (args[1])
+        
+        BUT, the order and type of arguments must be known ahead of time! Which is where **kwargs comes in handy.
+        
+    B. **kwargs
+
+        ** before variable name: collection of keyworded items (dictionary) to/from arguments
+        
+        e.g.
+        
+            def __init__(self, x, y, **kwargs):
+                    self.x = x
+                    self.y = y
+                    self.__dict__.update(kwargs)       # this will assign any dictionary items as attributes (e.g. {'size': 3} would be equivalent to self.size = 3)
+                
+        
+            In interactive prompt:
+                    a_point = Geometry.Point(1, 2, colour='Red', size='3')
+                    a_point.colour
+                    a_point.size
+                    a_point.__dict__
+                
+        Note: **kwargs uses a dictionary -> therefore could be unsorted! Use the keyword to get the item you need
+
+        
+        
+    C. Summary
+        *args to send non-keyworded variable-length argument list to functions
+        ** used to send keyworded variable-length argument dictionary to functions
+        
+        Note: args and kwargs are the names used by convention but could be named anything
+            e.g. In Line class, could have def __init__(self, p1, p2, **plotting_options):
+        
+
+    
+
+        
+        
